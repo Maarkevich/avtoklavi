@@ -1,9 +1,11 @@
 (function () {
   const FULL_DOCUMENTS = window.FULL_MANUAL_DOCUMENTS || [];
+  const APP_VERSION = window.FULL_MANUAL_VERSION || '2.0.3';
+  const FULL_HEADINGS = FULL_DOCUMENTS.flatMap((d,di)=>d.blocks.map((b,bi)=>({doc:di,block:bi,text:b.text||'',type:b.type})).filter(x=>x.type==='text'&&x.text.trim().length>0&&x.text.trim().length<180));
   const ALL_SECTIONS = [
     ...(window.AUTOCLAVE_SECTIONS || []),
     ...(window.BOILER_SECTIONS || []),
-    ...FULL_DOCUMENTS.flatMap((d,di) => [{id:`full-doc-${di+1}`,title:`${di===0?'Полная инструкция: ': 'Полная инструкция: '}${d.title}`,summary:`Полный исходный документ: ${d.blocks.length} блоков`,keywords:'полный документ исходная инструкция схема изображение',category:di===0?'boiler':'autoclave',content:d.blocks.map(b=>b.type==='text'?`<p>${b.text}</p>`:`<img src="${b.src}">`).join(''),fullDocument:d}])
+    ...FULL_DOCUMENTS.flatMap((d,di) => [{id:`full-doc-${di+1}`,title:`${di===0?'Котельная — полный справочник': 'Автоклавы — полный справочник'}`,summary:`Цельная база работника: ${d.blocks.filter(b=>b.type==='text').length} текстовых фрагментов и ${d.blocks.filter(b=>b.type==='image').length} изображений`,keywords:'полная инструкция исходный документ схема рисунок параметр процедура',category:di===0?'boiler':'autoclave',content:d.blocks.map(b=>b.type==='text'?`<p>${b.text}</p>`:`<img src="${b.src}">`).join(''),fullDocument:d}])
   ];
   const FAULTS = window.FAULTS_DATABASE || [];
 
@@ -58,9 +60,9 @@
       <div class="nav-group">
         <div class="nav-group-header">
           <span>Автоклавное отделение</span>
-          <span class="nav-group-badge">${acSections.length}</span>
+          <span class="nav-group-badge">${acSections.length} тем · полный текст и схемы</span>
         </div>
-        <button class="nav-item ${currentView.type === "section" && currentView.id === "full-doc-2" ? "active" : ""}" data-nav-type="section" data-section-id="full-doc-2"><span class="nav-item-icon">📚</span><span class="nav-item-title">Полная инструкция по автоклавам · 772 блока · схемы</span></button>
+        <button class="nav-item ${currentView.type === "section" && currentView.id === "full-doc-2" ? "active" : ""}" data-nav-type="section" data-section-id="full-doc-2"><span class="nav-item-icon">📚</span><span class="nav-item-title">Все разделы автоклавов и схемы</span></button>
         ${acSections
           .map(
             (s) => `
@@ -76,9 +78,9 @@
       <div class="nav-group">
         <div class="nav-group-header">
           <span>Котельное оборудование</span>
-          <span class="nav-group-badge">${blSections.length}</span>
+          <span class="nav-group-badge">${blSections.length} тем · полный текст и схемы</span>
         </div>
-        <button class="nav-item ${currentView.type === "section" && currentView.id === "full-doc-1" ? "active" : ""}" data-nav-type="section" data-section-id="full-doc-1"><span class="nav-item-icon">📚</span><span class="nav-item-title">Полная инструкция по котельной · 473 блока · схемы</span></button>
+        <button class="nav-item ${currentView.type === "section" && currentView.id === "full-doc-1" ? "active" : ""}" data-nav-type="section" data-section-id="full-doc-1"><span class="nav-item-icon">📚</span><span class="nav-item-title">Все разделы котельной и схемы</span></button>
         ${blSections
           .map(
             (s) => `
@@ -762,6 +764,9 @@
     }
   }
 
+  // Принудительная проверка актуальности сборки: старая версия не используется молча.
+  async function enforceBuildVersion(){try{const r=await fetch(`./full-index.js?build=${APP_VERSION}&t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('build check failed');document.getElementById('sidebarVersion').textContent=`Версия пособия: ${APP_VERSION}`;if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update();}}catch(e){const el=document.getElementById('sidebarVersion');if(el)el.textContent=`Версия пособия: ${APP_VERSION} · офлайн`;}}
+  enforceBuildVersion();
   // Старт приложения
   renderSidebar();
   renderHomeView();
