@@ -3,7 +3,7 @@
   const ALL_SECTIONS = [
     ...(window.AUTOCLAVE_SECTIONS || []),
     ...(window.BOILER_SECTIONS || []),
-    ...FULL_DOCUMENTS.flatMap((d,di) => [{id:`full-doc-${di+1}`,title:d.title,summary:`Полный исходный документ: ${d.blocks.length} блоков`,keywords:'полный документ исходная инструкция схема изображение',category:di===0?'boiler':'autoclave',content:d.blocks.map(b=>b.type==='text'?`<p>${b.text}</p>`:`<img src="${b.src}">`).join(''),fullDocument:d}])
+    ...FULL_DOCUMENTS.flatMap((d,di) => [{id:`full-doc-${di+1}`,title:`${di===0?'Полная инструкция: ': 'Полная инструкция: '}${d.title}`,summary:`Полный исходный документ: ${d.blocks.length} блоков`,keywords:'полный документ исходная инструкция схема изображение',category:di===0?'boiler':'autoclave',content:d.blocks.map(b=>b.type==='text'?`<p>${b.text}</p>`:`<img src="${b.src}">`).join(''),fullDocument:d}])
   ];
   const FAULTS = window.FAULTS_DATABASE || [];
 
@@ -60,6 +60,7 @@
           <span>Автоклавное отделение</span>
           <span class="nav-group-badge">${acSections.length}</span>
         </div>
+        <button class="nav-item ${currentView.type === "section" && currentView.id === "full-doc-2" ? "active" : ""}" data-nav-type="section" data-section-id="full-doc-2"><span class="nav-item-icon">📚</span><span class="nav-item-title">Полная инструкция по автоклавам · 772 блока · схемы</span></button>
         ${acSections
           .map(
             (s) => `
@@ -77,6 +78,7 @@
           <span>Котельное оборудование</span>
           <span class="nav-group-badge">${blSections.length}</span>
         </div>
+        <button class="nav-item ${currentView.type === "section" && currentView.id === "full-doc-1" ? "active" : ""}" data-nav-type="section" data-section-id="full-doc-1"><span class="nav-item-icon">📚</span><span class="nav-item-title">Полная инструкция по котельной · 473 блока · схемы</span></button>
         ${blSections
           .map(
             (s) => `
