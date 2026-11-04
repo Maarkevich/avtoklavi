@@ -1,6 +1,6 @@
 (function () {
   const FULL_DOCUMENTS = window.FULL_MANUAL_DOCUMENTS || [];
-  const APP_VERSION = window.FULL_MANUAL_VERSION || '2.0.3';
+  const APP_VERSION = window.FULL_MANUAL_VERSION || '2.0.5';
   const FULL_HEADINGS = FULL_DOCUMENTS.flatMap((d,di)=>d.blocks.map((b,bi)=>({doc:di,block:bi,text:b.text||'',type:b.type})).filter(x=>x.type==='text'&&x.text.trim().length>0&&x.text.trim().length<180));
   const ALL_SECTIONS = [
     ...(window.AUTOCLAVE_SECTIONS || []),
@@ -766,7 +766,7 @@
   }
 
   // Принудительная проверка актуальности сборки: старая версия не используется молча.
-  async function enforceBuildVersion(){try{const r=await fetch(`./full-index.js?build=${APP_VERSION}&t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('build check failed');document.getElementById('sidebarVersion').textContent=`Версия пособия: ${APP_VERSION}`;if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update();}}catch(e){const el=document.getElementById('sidebarVersion');if(el)el.textContent=`Версия пособия: ${APP_VERSION} · офлайн`;}}
+  async function enforceBuildVersion(){try{const r=await fetch(`./full-index.js?build=${APP_VERSION}&t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('build check failed');document.getElementById('sidebarVersion').textContent=`Версия пособия: ${APP_VERSION}`;if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();for(const reg of regs){await reg.update();if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});}}}}catch(e){const el=document.getElementById('sidebarVersion');if(el)el.textContent=`Версия пособия: ${APP_VERSION} · офлайн`;}}
   enforceBuildVersion();
   // Старт приложения
   renderSidebar();
