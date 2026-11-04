@@ -1,8 +1,7 @@
 (function () {
   const FULL_DOCUMENTS = window.FULL_MANUAL_DOCUMENTS || [];
   const UNIFIED = window.UNIFIED_MANUAL || {items:[],toc:[],documents:[]};
-  const UNIFIED_VERSION = window.UNIFIED_VERSION || '3.0.0';
-  const APP_VERSION = window.FULL_MANUAL_VERSION || '2.0.5';
+  const APP_VERSION = "3.1.0";
   const FULL_HEADINGS = FULL_DOCUMENTS.flatMap((d,di)=>d.blocks.map((b,bi)=>({doc:di,block:bi,text:b.text||'',type:b.type})).filter(x=>x.type==='text'&&x.text.trim().length>0&&x.text.trim().length<180));
   const ALL_SECTIONS = [
     ...(window.AUTOCLAVE_SECTIONS || []),
@@ -43,7 +42,7 @@
   const closeNormsModalBtn = document.getElementById("closeNormsModalBtn");
 
   // 1. Построение бокового меню (разделы из обоих документов + Справочник неисправностей)
-  function renderUnifiedTOC(){return UNIFIED.documents.map((d,di)=>{const rows=UNIFIED.toc.filter(x=>x.doc===di);return `<div class="unified-nav-group"><div class="nav-group-header"><span>${d.title}</span><span class="nav-group-badge">${rows.length}</span></div>${rows.map(x=>`<button class="unified-nav-item" data-unified-doc="${di}" data-unified-block="${x.block}">${x.title}</button>`).join('')}</div>`}).join('')}
+  function renderUnifiedTOC(){return UNIFIED.documents.map((d,di)=>{const rows=UNIFIED.toc.filter(x=>x.doc===di);return `<details class="unified-nav-group"><summary class="unified-nav-summary"><span>${di===0?'♨️':'📘'} ${d.title}</span><span class="nav-group-badge">${rows.length} разд.</span></summary><div class="unified-nav-list">${rows.map(x=>`<button class="unified-nav-item" data-unified-doc="${di}" data-unified-block="${x.block}">${x.title}</button>`).join('')}</div></details>`}).join('')}
   function renderSidebar() {
     const acSections = window.AUTOCLAVE_SECTIONS || [];
     const blSections = window.BOILER_SECTIONS || [];
@@ -588,6 +587,27 @@
       }
     });
 
+    // Поиск по КАЖДОМУ абзацу и рисунку полных документов (точный переход к месту)
+    UNIFIED.items.forEach((item) => {
+      const hay = `${item.section || ""} ${item.title || ""} ${item.text || ""}`.replace(/\s+/g, " ");
+      if (hay.length < 4) return;
+      if (hay.toLowerCase().includes(lowerQuery)) {
+        const plain = (item.text || item.title || "").replace(/\s+/g, " ");
+        results.push({
+          type: "unified",
+          doc: item.doc,
+          block: item.block,
+          badgeClass: item.doc === 1 ? "autoclave" : "boiler",
+          badgeText: item.type === "image"
+            ? (item.doc === 1 ? "Схема • Автоклавы" : "Схема • Котельная")
+            : (item.doc === 1 ? "Пункт • Автоклавы" : "Пункт • Котельная"),
+          title: (item.section || plain.slice(0, 80)).slice(0, 90),
+          snippet: buildSnippet(plain || item.section, query),
+          matches: 3
+        });
+      }
+    });
+
     // Поиск по базе неисправностей
     FAULTS.forEach((f) => {
       const fullText = `${f.title} ${f.cause} ${f.solution}`;
@@ -605,8 +625,10 @@
     });
 
     results.sort((a, b) => b.matches - a.matches);
+    const totalFound = results.length;
+    results.splice(60);
 
-    searchCountText.textContent = `Найдено совпадений: ${results.length}`;
+    searchCountText.textContent = totalFound > 60 ? `Найдено: ${totalFound} (показаны первые 60)` : `Найдено совпадений: ${totalFound}`;
     if (results.length === 0) {
       searchResultsList.innerHTML = `
         <div style="padding: 18px; text-align: center; color: var(--text-muted); font-size: 13.5px;">
@@ -637,6 +659,8 @@
 
           if (itemData.type === "section") {
             navigateTo({ type: "section", id: itemData.id }, query);
+          } else if (itemData.type === "unified") {
+            navigateTo({ type: "unified", doc: itemData.doc, block: itemData.block }, query);
           } else {
             navigateTo(
               { type: "faults", id: "faults", faultFilter: itemData.faultFilter },
@@ -769,9 +793,27 @@
   // Регистрация Service Worker для полной оффлайн-работы
   function registerServiceWorker() {
     if ("serviceWorker" in navigator) {
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (refreshing) return;
+        refreshing = true;
+        location.reload();
+      });
       window.addEventListener("load", () => {
         navigator.serviceWorker
           .register("./sw.js")
+          .then((reg) => {
+            if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+            reg.addEventListener("updatefound", () => {
+              const sw = reg.installing;
+              if (!sw) return;
+              sw.addEventListener("statechange", () => {
+                if (sw.state === "installed" && navigator.serviceWorker.controller) {
+                  sw.postMessage({ type: "SKIP_WAITING" });
+                }
+              });
+            });
+          })
           .catch((err) => console.warn("SW registration note:", err));
       });
     }

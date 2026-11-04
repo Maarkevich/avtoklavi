@@ -1246,3 +1246,31 @@ mark.search-hl.active-hl {
   }
 }
 .full-manual-banner{display:flex;justify-content:space-between;gap:22px;align-items:center;padding:22px 24px;margin:25px 0;border:1px solid var(--border);border-radius:16px;background:linear-gradient(110deg,#172b4d,#10203a);color:#fff}.full-manual-banner h2{margin:7px 0;font-size:21px}.full-manual-banner p{color:#b8c7dc;font-size:12px;line-height:1.5;margin:0;max-width:580px}.full-manual-actions{display:grid;gap:8px;min-width:220px}.primary-action{border:0;border-radius:9px;padding:11px 13px;background:#38bdf8;color:#071424;text-align:left;font-weight:700;font-size:12px}.primary-action:hover{background:#7dd3fc}.full-source-figure img{display:block;margin:auto;max-width:100%;height:auto}.full-source-block{font-size:13px;line-height:1.65;margin:7px 0}.full-source-block:empty{display:none}@media(max-width:700px){.full-manual-banner{display:block;padding:18px}.full-manual-actions{margin-top:16px;min-width:0}}
+
+/* Сворачиваемое оглавление исходных документов (v3.1.0) */
+.unified-nav-group { margin-bottom: 6px; }
+.unified-nav-summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 12px; cursor: pointer; list-style: none;
+  color: #c7d3e4; font-size: 12.5px; font-weight: 600;
+  background: rgba(255,255,255,0.04); border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.unified-nav-summary::-webkit-details-marker { display: none; }
+.unified-nav-summary::after {
+  content: "▸"; color: #64748b; transition: transform .2s; font-size: 12px;
+}
+.unified-nav-group[open] > .unified-nav-summary::after { transform: rotate(90deg); }
+.unified-nav-summary:hover { background: rgba(255,255,255,0.07); }
+.unified-nav-list {
+  max-height: 300px; overflow-y: auto; margin-top: 4px;
+  padding: 4px 2px 4px 8px; border-left: 1px solid rgba(255,255,255,0.08);
+}
+.unified-nav-item {
+  display: block; width: 100%; text-align: left;
+  background: none; border: 0; cursor: pointer;
+  color: #93a5bd; font-size: 11.5px; line-height: 1.4;
+  padding: 6px 10px; border-radius: 7px;
+}
+.unified-nav-item:hover { background: rgba(56,189,248,0.12); color: #e2ecf7; }
+.unified-nav-item:active { background: rgba(56,189,248,0.22); }

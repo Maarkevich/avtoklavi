@@ -1,49 +1,86 @@
-const CACHE_NAME = "operator-pwa-v3.0.0";
-const ASSETS_TO_CACHE = [
-  "./", "./index.html", "./styles.css", "./data-autoclave.js", "./data-boiler.js",
-  "./unified-manual.js", "./data-full-1.js", "./data-full-2.js", "./full-index.js", "./loading.js", "./app.js", "./manifest.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/maskable-512.png", ...Array.from({length:146},(_,i)=>{const n=i<82?i:i-82; const ext=(i<82? [9,10,14,18,19,20,21,22,23,24,25,28,32,33,34,35,36,37,38,39,40,41,42,43,76,77,78,81].includes(n): [0,1,9,14,15,16,17,27,30,31,32,33,34,35,36,37,38,39,40,41,42,43,48,49,50,57,58,63].includes(n)) ? "jpeg" : "png"; return `./images/doc${i<82?"1":"2"}_${String(n).padStart(3,"0")}.${ext}`})
+const VERSION = "3.1.0";
+const CACHE_CORE = "avtoklavi-core-v" + VERSION;
+const CACHE_MEDIA = "avtoklavi-media-v1";
+
+// Кэшируем при установке ТОЛЬКО ядро. Изображения (65 МБ) кэшируются
+// лениво при первом открытии — иначе install падает по таймауту на телефоне.
+const CORE = [
+  "./",
+  "./index.html",
+  "./styles.css",
+  "./app.js",
+  "./loading.js",
+  "./data-autoclave.js",
+  "./data-boiler.js",
+  "./data-full-1.js",
+  "./data-full-2.js",
+  "./full-index.js",
+  "./unified-manual.js",
+  "./manifest.json",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/maskable-512.png"
 ];
 
-self.addEventListener('message', event => { if(event.data?.type==='SKIP_WAITING') self.skipWaiting(); });
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
+    caches.open(CACHE_CORE).then((cache) => cache.addAll(CORE))
   );
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      );
-    })
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((k) => k !== CACHE_CORE && k !== CACHE_MEDIA)
+          .map((k) => caches.delete(k))
+      )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request)
-        .then((response) => {
-          return response;
-        })
-        .catch(() => {
-          if (event.request.mode === "navigate") {
-            return caches.match("./index.html");
+  const url = new URL(event.request.url);
+  if (event.request.method !== "GET" || url.origin !== location.origin) return;
+
+  // Изображения: сначала кэш, потом сеть с сохранением в media-кэш
+  if (url.pathname.includes("/images/")) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((resp) => {
+          if (resp.ok) {
+            const clone = resp.clone();
+            caches.open(CACHE_MEDIA).then((c) => c.put(event.request, clone));
           }
+          return resp;
         });
-    })
+      })
+    );
+    return;
+  }
+
+  // Ядро (HTML/JS/CSS/manifest): сначала сеть, при оффлайне — кэш
+  event.respondWith(
+    fetch(event.request)
+      .then((resp) => {
+        if (resp.ok) {
+          const clone = resp.clone();
+          caches.open(CACHE_CORE).then((c) => c.put(event.request, clone));
+        }
+        return resp;
+      })
+      .catch(() =>
+        caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          if (event.request.mode === "navigate") return caches.match("./index.html");
+        })
+      )
   );
 });
