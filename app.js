@@ -1,5 +1,7 @@
 (function () {
   const FULL_DOCUMENTS = window.FULL_MANUAL_DOCUMENTS || [];
+  const UNIFIED = window.UNIFIED_MANUAL || {items:[],toc:[],documents:[]};
+  const UNIFIED_VERSION = window.UNIFIED_VERSION || '3.0.0';
   const APP_VERSION = window.FULL_MANUAL_VERSION || '2.0.5';
   const FULL_HEADINGS = FULL_DOCUMENTS.flatMap((d,di)=>d.blocks.map((b,bi)=>({doc:di,block:bi,text:b.text||'',type:b.type})).filter(x=>x.type==='text'&&x.text.trim().length>0&&x.text.trim().length<180));
   const ALL_SECTIONS = [
@@ -41,6 +43,7 @@
   const closeNormsModalBtn = document.getElementById("closeNormsModalBtn");
 
   // 1. Построение бокового меню (разделы из обоих документов + Справочник неисправностей)
+  function renderUnifiedTOC(){return UNIFIED.documents.map((d,di)=>{const rows=UNIFIED.toc.filter(x=>x.doc===di);return `<div class="unified-nav-group"><div class="nav-group-header"><span>${d.title}</span><span class="nav-group-badge">${rows.length}</span></div>${rows.map(x=>`<button class="unified-nav-item" data-unified-doc="${di}" data-unified-block="${x.block}">${x.title}</button>`).join('')}</div>`}).join('')}
   function renderSidebar() {
     const acSections = window.AUTOCLAVE_SECTIONS || [];
     const blSections = window.BOILER_SECTIONS || [];
@@ -55,6 +58,10 @@
           <span class="nav-item-icon">🚨</span>
           <span class="nav-item-title">Неисправности и аварии</span>
         </button>
+      </div>
+
+      <div class="nav-group unified-toc">
+        ${renderUnifiedTOC()}
       </div>
 
       <div class="nav-group">
@@ -424,9 +431,12 @@
       renderSectionView(viewState.id, highlightKeyword);
     } else if (viewState.type === "faults") {
       renderFaultsView(viewState.faultFilter || "all", highlightKeyword);
+    } else if(viewState.type==='unified'){
+      renderUnifiedView(viewState.doc,viewState.block,highlightKeyword);
     }
   }
 
+  function renderUnifiedView(docIndex=0,focusBlock=0,keyword=''){const d=FULL_DOCUMENTS[docIndex];if(!d){renderHomeView();return;}const body=d.blocks.map((b,i)=>b.type==='image'?`<figure class="full-source-figure" id="unified-block-${i}"><img loading="lazy" src="${b.src}" alt="Иллюстрация из инструкции"><figcaption>Рисунок ${i+1}</figcaption></figure>`:`<div class="full-source-block" id="unified-block-${i}">${b.text}</div>`).join('');mainView.innerHTML=`<article class="article-card" id="articleContainer"><div class="article-TopBar"><span class="article-category-badge ${docIndex?'autoclave':'boiler'}">Единое рабочее содержание</span><button class="text-btn" id="backToHomeFromArticle" type="button">← К главной панели</button></div><h1 class="article-title">${d.title}</h1><p class="article-summary">Все разделы, процедуры, параметры и изображения объединены в одном интерфейсе пособия.</p><div class="article-body" id="articleBodyContent">${body}</div></article>`;document.getElementById('backToHomeFromArticle').onclick=()=>navigateTo({type:'home',id:'home'});if(keyword)applyKeywordHighlighting(keyword);setTimeout(()=>document.getElementById(`unified-block-${focusBlock}`)?.scrollIntoView({behavior:'smooth',block:'start'}),100)}
   // 5. Подсветка ключевых слов внутри открытого раздела и скролл к слову
   function clearHighlightsUI() {
     activeHighlights = [];
@@ -644,6 +654,8 @@
   function initEventListeners() {
     // Делегирование кликов по боковому меню
     sidebarNav.addEventListener("click", (e) => {
+      const unified=e.target.closest('.unified-nav-item');
+      if(unified){const di=Number(unified.dataset.unifiedDoc),bi=Number(unified.dataset.unifiedBlock);navigateTo({type:'unified',doc:di,block:bi});return;}
       const btn = e.target.closest(".nav-item");
       if (!btn) return;
       const navType = btn.getAttribute("data-nav-type");
