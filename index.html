@@ -15,6 +15,7 @@
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230f172a'/><circle cx='50' cy='50' r='36' fill='none' stroke='%2338bdf8' stroke-width='8'/><path d='M50 24 L50 50 L68 62' stroke='%23f59e0b' stroke-width='8' stroke-linecap='round' fill='none'/></svg>">
 </head>
 <body>
+  <div id="loadingScreen" class="loading-screen"><div class="loading-card"><div class="loading-logo">⚙</div><h2>Подготовка рабочего пособия</h2><p>Загружаем полный текст, изображения и быстрый поиск. Не закрывайте окно до завершения.</p><div class="loading-track"><div id="loadingProgress"></div></div><strong id="loadingPercent">0%</strong><span id="loadingStatus">Подготовка…</span></div></div>
   <div class="app-layout">
     <!-- Боковое меню (Слева на десктопе, выезжающее на мобильных) -->
     <aside class="sidebar" id="sidebar">
@@ -157,8 +158,12 @@
     </div>
   </div>
 
+  <script src="./loading.js"></script>
   <script src="./data-autoclave.js"></script>
   <script src="./data-boiler.js"></script>
+  <script src="./data-full-1.js"></script>
+  <script src="./data-full-2.js"></script>
+  <script src="./full-index.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

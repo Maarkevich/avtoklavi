@@ -1,7 +1,9 @@
 (function () {
+  const FULL_DOCUMENTS = window.FULL_MANUAL_DOCUMENTS || [];
   const ALL_SECTIONS = [
     ...(window.AUTOCLAVE_SECTIONS || []),
-    ...(window.BOILER_SECTIONS || [])
+    ...(window.BOILER_SECTIONS || []),
+    ...FULL_DOCUMENTS.flatMap((d,di) => [{id:`full-doc-${di+1}`,title:d.title,summary:`Полный исходный документ: ${d.blocks.length} блоков`,keywords:'полный документ исходная инструкция схема изображение',category:di===0?'boiler':'autoclave',content:d.blocks.map(b=>b.type==='text'?`<p>${b.text}</p>`:`<img src="${b.src}">`).join(''),fullDocument:d}])
   ];
   const FAULTS = window.FAULTS_DATABASE || [];
 
@@ -274,6 +276,12 @@
     }
 
     const section = ALL_SECTIONS[idx];
+    if (section.fullDocument) {
+      const body = section.fullDocument.blocks.map((b,i)=>b.type==='image'?`<figure class="full-source-figure"><img loading="lazy" src="${b.src}" alt="Иллюстрация из исходной инструкции"><figcaption>Иллюстрация ${i+1}</figcaption></figure>`:`<div class="full-source-block" id="full-block-${i}">${b.text}</div>`).join('');
+      mainView.innerHTML = `<article class="article-card" id="articleContainer"><div class="article-TopBar"><span class="article-category-badge ${section.category}">Полный исходный документ</span><button class="text-btn" id="backToHomeFromArticle" type="button">← К главной панели</button></div><h1 class="article-title">${section.title}</h1><p class="article-summary">${section.summary}</p><div class="article-body" id="articleBodyContent">${body}</div></article>`;
+      document.getElementById('backToHomeFromArticle').addEventListener('click',()=>navigateTo({type:'home',id:'home'}));
+      if(highlightKeyword&&highlightKeyword.trim().length>=2)applyKeywordHighlighting(highlightKeyword.trim());else{clearHighlightsUI();contentScroll.scrollTop=0} return;
+    }
     const prevSection = idx > 0 ? ALL_SECTIONS[idx - 1] : null;
     const nextSection = idx < ALL_SECTIONS.length - 1 ? ALL_SECTIONS[idx + 1] : null;
 

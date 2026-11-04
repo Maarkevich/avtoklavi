@@ -1,12 +1,7 @@
-const CACHE_NAME = "operator-pwa-v1";
+const CACHE_NAME = "operator-pwa-v2.0.0";
 const ASSETS_TO_CACHE = [
-  "./",
-  "./index.html",
-  "./styles.css",
-  "./data-autoclave.js",
-  "./data-boiler.js",
-  "./app.js",
-  "./manifest.json"
+  "./", "./index.html", "./styles.css", "./data-autoclave.js", "./data-boiler.js",
+  "./data-full-1.js", "./data-full-2.js", "./full-index.js", "./loading.js", "./app.js", "./manifest.json", ...Array.from({length:146},(_,i)=>`./images/doc${i<61?'1':'2'}_${String(i<61?i:i-61).padStart(3,'0')}.${i===0?'jpeg':'png'}`)
 ];
 
 self.addEventListener("install", (event) => {
