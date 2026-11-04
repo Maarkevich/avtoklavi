@@ -1,12 +1,15 @@
 (function () {
-  const FULL_DOCUMENTS = window.FULL_MANUAL_DOCUMENTS || [];
   const UNIFIED = window.UNIFIED_MANUAL || {items:[],toc:[],documents:[]};
-  const APP_VERSION = "3.1.0";
-  const FULL_HEADINGS = FULL_DOCUMENTS.flatMap((d,di)=>d.blocks.map((b,bi)=>({doc:di,block:bi,text:b.text||'',type:b.type})).filter(x=>x.type==='text'&&x.text.trim().length>0&&x.text.trim().length<180));
+  const ENRICHED = window.ENRICHED_CONTENT || {};
+  const APP_VERSION = "3.2.0";
+  // Карта "doc-block" → id тематического раздела (для переходов из оглавления и поиска)
+  const BLOCK_TO_SECTION = {};
+  Object.entries(ENRICHED).forEach(([sid, blocks]) =>
+    blocks.forEach((b) => { BLOCK_TO_SECTION[`${b.doc}-${b.block}`] = sid; })
+  );
   const ALL_SECTIONS = [
     ...(window.AUTOCLAVE_SECTIONS || []),
-    ...(window.BOILER_SECTIONS || []),
-    ...FULL_DOCUMENTS.flatMap((d,di) => [{id:`full-doc-${di+1}`,title:`${di===0?'Котельная — полный справочник': 'Автоклавы — полный справочник'}`,summary:`Цельная база работника: ${d.blocks.filter(b=>b.type==='text').length} текстовых фрагментов и ${d.blocks.filter(b=>b.type==='image').length} изображений`,keywords:'полная инструкция исходный документ схема рисунок параметр процедура',category:di===0?'boiler':'autoclave',content:d.blocks.map(b=>b.type==='text'?`<p>${b.text}</p>`:`<img src="${b.src}">`).join(''),fullDocument:d}])
+    ...(window.BOILER_SECTIONS || [])
   ];
   const FAULTS = window.FAULTS_DATABASE || [];
 
@@ -68,7 +71,6 @@
           <span>Автоклавное отделение</span>
           <span class="nav-group-badge">${acSections.length} тем · полный текст и схемы</span>
         </div>
-        <button class="nav-item ${currentView.type === "section" && currentView.id === "full-doc-2" ? "active" : ""}" data-nav-type="section" data-section-id="full-doc-2"><span class="nav-item-icon">📚</span><span class="nav-item-title">Все разделы автоклавов и схемы</span></button>
         ${acSections
           .map(
             (s) => `
@@ -86,7 +88,6 @@
           <span>Котельное оборудование</span>
           <span class="nav-group-badge">${blSections.length} тем · полный текст и схемы</span>
         </div>
-        <button class="nav-item ${currentView.type === "section" && currentView.id === "full-doc-1" ? "active" : ""}" data-nav-type="section" data-section-id="full-doc-1"><span class="nav-item-icon">📚</span><span class="nav-item-title">Все разделы котельной и схемы</span></button>
         ${blSections
           .map(
             (s) => `
@@ -146,7 +147,6 @@
         </div>
       </section>
 
-      <section class="full-manual-banner"><div><span class="hero-tag">ПОЛНАЯ ИНФОРМАЦИОННАЯ БАЗА</span><h2>Всё содержание документов — внутри пособия</h2><p>Текст, разделы, параметры, процедуры, схемы и изображения доступны из меню и поиска. Выберите нужный справочник.</p></div><div class="full-manual-actions"><button class="primary-action" data-quick-action="section" data-target-id="full-doc-2">📚 Автоклавы · 772 блока</button><button class="primary-action" data-quick-action="section" data-target-id="full-doc-1">♨ Котельная · 473 блока</button></div></section>
       <h2 class="dashboard-section-title">🚨 Экстренные ситуации (прямой переход к инструкции)</h2>
       <div class="emergency-grid">
         <button class="emergency-card" data-quick-action="section" data-target-id="ac-scada-fail">
@@ -287,12 +287,15 @@
     }
 
     const section = ALL_SECTIONS[idx];
-    if (section.fullDocument) {
-      const body = section.fullDocument.blocks.map((b,i)=>b.type==='image'?`<figure class="full-source-figure"><img loading="lazy" src="${b.src}" alt="Иллюстрация из исходной инструкции"><figcaption>Иллюстрация ${i+1}</figcaption></figure>`:`<div class="full-source-block" id="full-block-${i}">${b.text}</div>`).join('');
-      mainView.innerHTML = `<article class="article-card" id="articleContainer"><div class="article-TopBar"><span class="article-category-badge ${section.category}">Полный исходный документ</span><button class="text-btn" id="backToHomeFromArticle" type="button">← К главной панели</button></div><h1 class="article-title">${section.title}</h1><p class="article-summary">${section.summary}</p><div class="article-body" id="articleBodyContent">${body}</div></article>`;
-      document.getElementById('backToHomeFromArticle').addEventListener('click',()=>navigateTo({type:'home',id:'home'}));
-      if(highlightKeyword&&highlightKeyword.trim().length>=2)applyKeywordHighlighting(highlightKeyword.trim());else{clearHighlightsUI();contentScroll.scrollTop=0} return;
-    }
+    // Исходный текст и изображения инструкции, встроенные в этот раздел
+    const srcBlocks = ENRICHED[section.id] || [];
+    const srcHtml = srcBlocks.map((b) => b.type === 'image'
+      ? `<figure class="full-source-figure" id="src-block-${b.doc}-${b.block}"><img loading="lazy" src="${b.src}" alt="Иллюстрация из инструкции"><figcaption>Схема / фото из инструкции</figcaption></figure>`
+      : `<div class="full-source-block" id="src-block-${b.doc}-${b.block}">${b.text}</div>`
+    ).join('');
+    const srcPart = srcBlocks.length
+      ? `<h2 class="src-content-title">📄 Полный текст инструкции по этому разделу</h2><div class="src-content">${srcHtml}</div>`
+      : '';
     const prevSection = idx > 0 ? ALL_SECTIONS[idx - 1] : null;
     const nextSection = idx < ALL_SECTIONS.length - 1 ? ALL_SECTIONS[idx + 1] : null;
 
@@ -310,6 +313,7 @@
 
         <div class="article-body" id="articleBodyContent">
           ${section.content}
+          ${srcPart}
         </div>
 
         <div class="article-footer-nav">
@@ -430,12 +434,15 @@
       renderSectionView(viewState.id, highlightKeyword);
     } else if (viewState.type === "faults") {
       renderFaultsView(viewState.faultFilter || "all", highlightKeyword);
-    } else if(viewState.type==='unified'){
-      renderUnifiedView(viewState.doc,viewState.block,highlightKeyword);
+    }
+    // Скролл к конкретному пункту инструкции внутри раздела
+    if (viewState.focusBlock) {
+      setTimeout(() => {
+        document.getElementById('src-block-' + viewState.focusBlock)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
     }
   }
-
-  function renderUnifiedView(docIndex=0,focusBlock=0,keyword=''){const d=FULL_DOCUMENTS[docIndex];if(!d){renderHomeView();return;}const body=d.blocks.map((b,i)=>b.type==='image'?`<figure class="full-source-figure" id="unified-block-${i}"><img loading="lazy" src="${b.src}" alt="Иллюстрация из инструкции"><figcaption>Рисунок ${i+1}</figcaption></figure>`:`<div class="full-source-block" id="unified-block-${i}">${b.text}</div>`).join('');mainView.innerHTML=`<article class="article-card" id="articleContainer"><div class="article-TopBar"><span class="article-category-badge ${docIndex?'autoclave':'boiler'}">Единое рабочее содержание</span><button class="text-btn" id="backToHomeFromArticle" type="button">← К главной панели</button></div><h1 class="article-title">${d.title}</h1><p class="article-summary">Все разделы, процедуры, параметры и изображения объединены в одном интерфейсе пособия.</p><div class="article-body" id="articleBodyContent">${body}</div></article>`;document.getElementById('backToHomeFromArticle').onclick=()=>navigateTo({type:'home',id:'home'});if(keyword)applyKeywordHighlighting(keyword);setTimeout(()=>document.getElementById(`unified-block-${focusBlock}`)?.scrollIntoView({behavior:'smooth',block:'start'}),100)}
   // 5. Подсветка ключевых слов внутри открытого раздела и скролл к слову
   function clearHighlightsUI() {
     activeHighlights = [];
@@ -593,15 +600,18 @@
       if (hay.length < 4) return;
       if (hay.toLowerCase().includes(lowerQuery)) {
         const plain = (item.text || item.title || "").replace(/\s+/g, " ");
+        const sid = BLOCK_TO_SECTION[`${item.doc}-${item.block}`];
+        if (!sid) return;
+        const sec = ALL_SECTIONS.find((s) => s.id === sid);
         results.push({
           type: "unified",
-          doc: item.doc,
-          block: item.block,
+          sectionId: sid,
+          focusBlock: `${item.doc}-${item.block}`,
           badgeClass: item.doc === 1 ? "autoclave" : "boiler",
           badgeText: item.type === "image"
             ? (item.doc === 1 ? "Схема • Автоклавы" : "Схема • Котельная")
             : (item.doc === 1 ? "Пункт • Автоклавы" : "Пункт • Котельная"),
-          title: (item.section || plain.slice(0, 80)).slice(0, 90),
+          title: sec ? sec.title : (item.section || '').slice(0, 90),
           snippet: buildSnippet(plain || item.section, query),
           matches: 3
         });
@@ -660,7 +670,7 @@
           if (itemData.type === "section") {
             navigateTo({ type: "section", id: itemData.id }, query);
           } else if (itemData.type === "unified") {
-            navigateTo({ type: "unified", doc: itemData.doc, block: itemData.block }, query);
+            navigateTo({ type: "section", id: itemData.sectionId, focusBlock: itemData.focusBlock }, query);
           } else {
             navigateTo(
               { type: "faults", id: "faults", faultFilter: itemData.faultFilter },
@@ -679,7 +689,12 @@
     // Делегирование кликов по боковому меню
     sidebarNav.addEventListener("click", (e) => {
       const unified=e.target.closest('.unified-nav-item');
-      if(unified){const di=Number(unified.dataset.unifiedDoc),bi=Number(unified.dataset.unifiedBlock);navigateTo({type:'unified',doc:di,block:bi});return;}
+      if(unified){
+        const key = unified.dataset.unifiedDoc + '-' + unified.dataset.unifiedBlock;
+        const sid = BLOCK_TO_SECTION[key];
+        if (sid) navigateTo({ type: 'section', id: sid, focusBlock: key });
+        return;
+      }
       const btn = e.target.closest(".nav-item");
       if (!btn) return;
       const navType = btn.getAttribute("data-nav-type");
@@ -820,7 +835,7 @@
   }
 
   // Принудительная проверка актуальности сборки: старая версия не используется молча.
-  async function enforceBuildVersion(){try{const r=await fetch(`./full-index.js?build=${APP_VERSION}&t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('build check failed');document.getElementById('sidebarVersion').textContent=`Версия пособия: ${APP_VERSION}`;if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();for(const reg of regs){await reg.update();if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});}}}}catch(e){const el=document.getElementById('sidebarVersion');if(el)el.textContent=`Версия пособия: ${APP_VERSION} · офлайн`;}}
+  async function enforceBuildVersion(){try{const r=await fetch(`./manifest.json?build=${APP_VERSION}&t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('build check failed');document.getElementById('sidebarVersion').textContent=`Версия пособия: ${APP_VERSION}`;if('serviceWorker' in navigator){const regs=await navigator.serviceWorker.getRegistrations();for(const reg of regs){await reg.update();if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});}}}}catch(e){const el=document.getElementById('sidebarVersion');if(el)el.textContent=`Версия пособия: ${APP_VERSION} · офлайн`;}}
   enforceBuildVersion();
   // Старт приложения
   renderSidebar();

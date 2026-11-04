@@ -1,4 +1,4 @@
-const VERSION = "3.1.0";
+const VERSION = "3.2.0";
 const CACHE_CORE = "avtoklavi-core-v" + VERSION;
 const CACHE_MEDIA = "avtoklavi-media-v1";
 
@@ -12,9 +12,7 @@ const CORE = [
   "./loading.js",
   "./data-autoclave.js",
   "./data-boiler.js",
-  "./data-full-1.js",
-  "./data-full-2.js",
-  "./full-index.js",
+  "./data-enriched.js",
   "./unified-manual.js",
   "./manifest.json",
   "./icons/icon-192.png",

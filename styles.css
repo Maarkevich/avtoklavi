@@ -1274,3 +1274,7 @@ mark.search-hl.active-hl {
 }
 .unified-nav-item:hover { background: rgba(56,189,248,0.12); color: #e2ecf7; }
 .unified-nav-item:active { background: rgba(56,189,248,0.22); }
+
+/* Встроенный полный текст инструкции внутри раздела (v3.2.0) */
+.src-content-title{margin:26px 0 6px;font-size:15px;color:#7dd3fc;border-top:1px solid var(--border);padding-top:20px}
+.src-content{border-left:2px solid rgba(56,189,248,.25);padding-left:12px}
