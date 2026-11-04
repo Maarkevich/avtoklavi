@@ -140,6 +140,7 @@
         </div>
       </section>
 
+      <section class="full-manual-banner"><div><span class="hero-tag">ПОЛНАЯ ИНФОРМАЦИОННАЯ БАЗА</span><h2>Всё содержание документов — внутри пособия</h2><p>Текст, разделы, параметры, процедуры, схемы и изображения доступны из меню и поиска. Выберите нужный справочник.</p></div><div class="full-manual-actions"><button class="primary-action" data-quick-action="section" data-target-id="full-doc-2">📚 Автоклавы · 772 блока</button><button class="primary-action" data-quick-action="section" data-target-id="full-doc-1">♨ Котельная · 473 блока</button></div></section>
       <h2 class="dashboard-section-title">🚨 Экстренные ситуации (прямой переход к инструкции)</h2>
       <div class="emergency-grid">
         <button class="emergency-card" data-quick-action="section" data-target-id="ac-scada-fail">
