@@ -1,7 +1,7 @@
 /* Справочник оператора v4.0.0 — единое приложение из двух инструкций */
 (() => {
   "use strict";
-  const VERSION = "4.0.0";
+  const VERSION = "4.1.0";
   const M = window.MANUAL;
   M.books.forEach((b, i) => { b.short = i === 0 ? "Котельное оборудование" : "Автоклавное отделение"; });
   const $ = (s) => document.querySelector(s);
@@ -51,8 +51,6 @@
 
   /* ---------- Главная ---------- */
   function renderHome() {
-    const texts = M.books.reduce((n, b) => n + b.chapters.reduce((m, c) => m + c.items.filter((x) => x.k !== "img").length, 0), 0);
-    const imgs = M.books.reduce((n, b) => n + b.chapters.reduce((m, c) => m + c.items.filter((x) => x.k === "img").length, 0), 0);
     const keyChapters = [
       { bi: 1, ci: 0, ic: "gauge", t: "Устройство АСУ и автоклава", s: "SCADA, СБУ, крышки, вакуум" },
       { bi: 1, ci: 4, ic: "doc", t: "Режимы и циклограммы", s: "Параметры обработки кирпича-сырца" },
@@ -64,14 +62,6 @@
         <section class="hero">
           <div class="hero-kicker">Оперативное пособие работника</div>
           <h1>Автоклавное отделение и котельная</h1>
-          <p>Полный текст обеих производственных инструкций со всеми схемами и фотографиями — в едином интерфейсе. Ищите по клапанам, параметрам и ситуациям, открывайте нужный раздел за секунды. Работает офлайн.</p>
-          <div class="hero-stats">
-            <div class="stat"><b>2</b><span>инструкции</span></div>
-            <div class="stat"><b>${M.books.reduce((n, b) => n + b.chapters.length, 0)}</b><span>разделов</span></div>
-            <div class="stat"><b>${texts}</b><span>пунктов текста</span></div>
-            <div class="stat"><b>${imgs}</b><span>схем и фото</span></div>
-            <div class="stat"><b>${M.faults.length}</b><span>аварийных случая</span></div>
-          </div>
         </section>
 
         <h2 class="section-title">${ICONS.alert} Быстрый доступ</h2>
@@ -146,6 +136,8 @@
         return `<div class="art-li" id="${id}"><span class="li-dot"></span><span>${mark(it.t, q)}</span></div>`;
       if (it.k === "warn")
         return `<div class="art-warn" id="${id}">${ICONS.alert}<div>${mark(it.t, q)}</div></div>`;
+      if (it.k === "toc")
+        return `<button class="art-toc ${it.to ? "" : "no-link"}" id="${id}" ${it.to ? `data-toc-book="${bi}" data-toc-to="${it.to}" ${it.blk != null ? `data-toc-blk="${it.blk}"` : ""}` : "disabled"}>${ICONS.doc}<span>${mark(it.t, q)}</span>${it.to ? ICONS.right : ""}</button>`;
       return `<div class="art-block" id="${id}">${mark(it.t, q)}</div>`;
     }).join("");
     $("#content").innerHTML = `
@@ -185,20 +177,25 @@
     if (query.length < 2) { searchBox.hidden = true; searchBox.innerHTML = ""; return; }
     const lq = query.toLowerCase();
     const out = [];
-    M.books.forEach((b, bi) => b.chapters.forEach((c, ci) => c.items.forEach((it, idx) => {
-      if (it.k === "img") {
-        if (c.title.toLowerCase().includes(lq)) {
-          out.push({ bi, ci, n: idx, kind: "img", title: c.title, snippet: "Схема / фото из инструкции" });
+    M.books.forEach((b, bi) => b.chapters.forEach((c, ci) => {
+      if (c.title.toLowerCase().includes(lq)) {
+        out.push({ bi, ci, n: null, kind: "chapter", title: c.title, snippet: "Открыть раздел целиком" });
+      }
+      c.items.forEach((it, idx) => {
+        if (it.k === "img") {
+          if (c.title.toLowerCase().includes(lq)) {
+            out.push({ bi, ci, n: idx, kind: "img", title: c.title, snippet: "Схема / фото из инструкции" });
+          }
+          return;
         }
-        return;
-      }
-      const hay = (it.t || "").toLowerCase();
-      if (hay.includes(lq)) {
-        const i = hay.indexOf(lq);
-        const snip = it.t.slice(Math.max(0, i - 60), i + 120);
-        out.push({ bi, ci, n: idx, kind: "text", title: c.title, snippet: "…" + snip.trim() + "…" });
-      }
-    })));
+        const hay = (it.t || "").toLowerCase();
+        if (hay.includes(lq)) {
+          const i = hay.indexOf(lq);
+          const snip = it.t.slice(Math.max(0, i - 60), i + 120);
+          out.push({ bi, ci, n: idx, kind: "text", title: c.title, snippet: "…" + snip.trim() + "…" });
+        }
+      });
+    }));
     M.faults.forEach((f, fi) => {
       if ((f.title + " " + f.cause + " " + f.solution).toLowerCase().includes(lq)) {
         out.push({ fault: fi, kind: "fault", title: f.title, snippet: f.cause.slice(0, 140) });
@@ -210,7 +207,7 @@
       <div class="sr-head">Найдено: ${total}${total > 50 ? " · показаны первые 50" : ""}</div>
       ${shown.map((r, idx) => `
         <button class="sr-item" data-sr="${idx}">
-          <span class="sr-badge ${r.kind === "fault" ? "fault" : r.bi === 1 ? "autoclave" : "boiler"}">${r.kind === "fault" ? "Авария" : r.kind === "img" ? "Схема" : r.bi === 1 ? "Автоклавы" : "Котельная"}</span>
+          <span class="sr-badge ${r.kind === "fault" ? "fault" : r.bi === 1 ? "autoclave" : "boiler"}">${r.kind === "fault" ? "Авария" : r.kind === "img" ? "Схема" : r.kind === "chapter" ? "Раздел" : r.bi === 1 ? "Автоклавы" : "Котельная"}</span>
           <span class="sr-title">${mark(r.title, query)}</span>
           <span class="sr-snippet">${mark(r.snippet, query)}</span>
         </button>`).join("") || '<div class="sr-head">Ничего не найдено — попробуйте другие слова</div>'}`;
@@ -223,10 +220,12 @@
     }));
   }
 
-  let searchTimer = null;
-  searchInput.addEventListener("input", (e) => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => doSearch(e.target.value), 180);
+  searchInput.addEventListener("input", (e) => doSearch(e.target.value));
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      const first = searchBox.querySelector("[data-sr]");
+      if (first) first.click();
+    }
   });
   clearBtn.addEventListener("click", () => {
     searchInput.value = "";
@@ -254,6 +253,16 @@
     if (c) {
       const [bi, ci] = c.dataset.ch.split(":").map(Number);
       navigate({ type: "chapter", book: bi, ch: ci });
+      return;
+    }
+    const t = e.target.closest("[data-toc-to]");
+    if (t) {
+      const bi = Number(t.dataset.tocBook);
+      const to = t.dataset.tocTo;
+      const ci = M.books[bi].chapters.findIndex((ch) => ch.id === to);
+      if (ci >= 0) {
+        navigate({ type: "chapter", book: bi, ch: ci, focus: t.dataset.tocBlk != null ? Number(t.dataset.tocBlk) : null });
+      }
     }
   });
 

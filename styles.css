@@ -265,3 +265,16 @@ mark { background: rgba(251,191,36,.85); color: #111; border-radius: 3px; paddin
 @media (min-width: 921px) {
   .sidebar-backdrop { display: none !important; }
 }
+
+/* Кликабельные пункты оглавления внутри главы */
+.art-toc {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 12px 14px; margin: 6px 0; border-radius: var(--r-sm);
+  background: var(--glass); border: 1px solid var(--border);
+  font-size: 13.5px; font-weight: 600; color: #d7e0ee; line-height: 1.45; transition: .18s;
+}
+.art-toc svg { width: 17px; height: 17px; flex: 0 0 17px; color: var(--accent); }
+.art-toc svg:last-child { margin-left: auto; color: var(--muted); width: 14px; height: 14px; flex-basis: 14px; }
+.art-toc:hover { background: var(--glass2); border-color: rgba(56,189,248,.4); transform: translateX(3px); }
+.art-toc.no-link { opacity: .55; cursor: default; }
+.art-toc.no-link:hover { transform: none; background: var(--glass); border-color: var(--border); }

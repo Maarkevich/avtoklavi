@@ -35,6 +35,25 @@ CHAPTERS = {
  ],
 }
 
+RE_PAGE = re.compile(r'\s*стр\.\s*\d+[\w\.]*\s*$', re.I)
+RE_TOC_LINE = re.compile(r'стр\.\s*\d+', re.I)
+
+def clean_title(t):
+    return RE_PAGE.sub('', t).strip(' .')
+
+def find_target(title, chaps):
+    tl = title.lower().rstrip('.')
+    best, score = None, 0
+    for c in chaps:
+        cl = c['title'].lower().rstrip('.')
+        words = [w for w in re.split(r'\W+', tl) if len(w) > 3]
+        s = sum(1 for w in words if w in cl)
+        if cl and (tl in cl or cl in tl):
+            s += 3
+        if s > score:
+            best, score = c['id'], s
+    return best if score >= 1 else None
+
 RE_HEAD = re.compile(r'^(\d+\.\s|\d+\.\d+|[А-ЯЁ][А-ЯЁ\s\-]{6,}$)')
 RE_LIST = re.compile(r'^(\d+\)|\d+\.\s|[а-я]\)|[-–•]\s)')
 RE_WARN = re.compile(r'(ВНИМАНИЕ|ЗАПРЕЩ|ОПАСН|КАТЕГОРИЧЕСКИ|АВАРИЙНАЯ ОСТАНОВКА)', re.I)
@@ -55,10 +74,44 @@ books = []
 for di, doc in enumerate(docs):
     chaps = []
     for cid, title, a, z in CHAPTERS[di]:
-        items = [block_view(b) for b in doc['blocks'][a:z+1] if (b['type']=='image' or (b.get('text') or '').strip())]
+        items = []
+        for b in doc['blocks'][a:z+1]:
+            if b['type'] == 'image':
+                items.append({'k':'img','src':b['src']})
+                continue
+            t = (b.get('text') or '').strip()
+            if not t:
+                continue
+            if RE_TOC_LINE.search(t) and len(t) < 160:
+                ct = clean_title(t)
+                if ct and ct.upper() != 'ОГЛАВЛЕНИЕ':
+                    items.append({'k':'toc','t':ct})
+            else:
+                items.append(block_view(b))
         chaps.append({'id':cid,'title':title,'items':items})
+    # привязать пункты оглавления к главам и конкретным заголовкам внутри них
+    for c in chaps:
+        for it in c['items']:
+            if it['k'] == 'toc':
+                tgt = find_target(it['t'], chaps)
+                if tgt:
+                    it['to'] = tgt
+                else:
+                    tl = it['t'].lower().rstrip('.')
+                    words = [w for w in re.split(r'\W+', tl) if len(w) > 3]
+                    best = None
+                    for c2 in chaps:
+                        for idx, x in enumerate(c2['items']):
+                            if x['k'] in ('h', 'p'):
+                                xt = (x.get('t') or '').lower()
+                                score = sum(1 for w in words if w in xt)
+                                if score >= max(2, len(words) - 1) and (best is None or score > best[0]):
+                                    best = (score, c2['id'], idx)
+                    if best:
+                        it['to'], it['blk'] = best[1], best[2]
     books.append({'id':'boiler' if di==0 else 'ac',
                   'title':doc['title'],
+                  'short':'Котельное оборудование' if di==0 else 'Автоклавное отделение',
                   'chapters':chaps})
 
 faults = json.loads((root/'faults.json').read_text()) if (root/'faults.json').exists() else []

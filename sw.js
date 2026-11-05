@@ -1,4 +1,4 @@
-const VERSION = "4.0.0";
+const VERSION = "4.1.0";
 const CORE_CACHE = "manual-core-v" + VERSION;
 const IMG_CACHE = "manual-img-v" + VERSION;
 
