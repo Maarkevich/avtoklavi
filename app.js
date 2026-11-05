@@ -1,7 +1,7 @@
 /* Справочник оператора v4.0.0 — единое приложение из двух инструкций */
 (() => {
   "use strict";
-  const VERSION = "4.1.0";
+  const VERSION = "4.2.0";
   const M = window.MANUAL;
   M.books.forEach((b, i) => { b.short = i === 0 ? "Котельное оборудование" : "Автоклавное отделение"; });
   const $ = (s) => document.querySelector(s);
@@ -51,6 +51,7 @@
 
   /* ---------- Главная ---------- */
   function renderHome() {
+    hlHide();
     const keyChapters = [
       { bi: 1, ci: 0, ic: "gauge", t: "Устройство АСУ и автоклава", s: "SCADA, СБУ, крышки, вакуум" },
       { bi: 1, ci: 4, ic: "doc", t: "Режимы и циклограммы", s: "Параметры обработки кирпича-сырца" },
@@ -93,6 +94,7 @@
 
   /* ---------- Неисправности и аварии ---------- */
   function renderFaults(filter = "all") {
+    hlHide();
     const subs = [...new Set(M.faults.map((f) => f.subsystemTitle))];
     const list = M.faults.filter((f) => filter === "all" || f.subsystemTitle === filter);
     $("#content").innerHTML = `
@@ -119,6 +121,46 @@
     document.querySelectorAll("[data-ff]").forEach((b) =>
       b.addEventListener("click", () => renderFaults(b.dataset.ff)));
   }
+
+  /* ---------- Плавающая панель навигации по совпадениям ---------- */
+  const hlbar = document.createElement("div");
+  hlbar.className = "hlbar";
+  hlbar.hidden = true;
+  hlbar.innerHTML = `
+    <span class="hlbar-count">0 из 0</span>
+    <button type="button" data-hl="up" aria-label="Предыдущее"><svg viewBox="0 0 24 24" fill="none"><path d="M6 15l6-6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" data-hl="down" aria-label="Следующее"><svg viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" data-hl="close" aria-label="Закрыть"><svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>`;
+  document.body.appendChild(hlbar);
+
+  let hlMarks = [];
+  let hlIndex = -1;
+
+  function hlUpdate() {
+    hlbar.querySelector(".hlbar-count").textContent = hlMarks.length ? `${hlIndex + 1} из ${hlMarks.length}` : "0 из 0";
+    hlMarks.forEach((m, i) => m.classList.toggle("hl-current", i === hlIndex));
+  }
+  function hlGo(i) {
+    if (!hlMarks.length) return;
+    hlIndex = (i + hlMarks.length) % hlMarks.length;
+    hlUpdate();
+    hlMarks[hlIndex].scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  function hlHide() { hlbar.hidden = true; hlMarks = []; hlIndex = -1; }
+  function hlShow(q) {
+    hlMarks = [...document.querySelectorAll("#content mark")];
+    if (!hlMarks.length) { hlHide(); return; }
+    hlbar.hidden = false;
+    hlIndex = 0;
+    hlUpdate();
+  }
+  hlbar.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-hl]");
+    if (!b) return;
+    if (b.dataset.hl === "up") hlGo(hlIndex - 1);
+    else if (b.dataset.hl === "down") hlGo(hlIndex + 1);
+    else hlHide();
+  });
 
   /* ---------- Глава ---------- */
   function renderChapter(bi, ci, focus, q) {
@@ -164,6 +206,7 @@
     } else {
       $("#content").scrollTop = 0;
     }
+    if (q) hlShow(q); else hlHide();
   }
 
   /* ---------- Поиск ---------- */
