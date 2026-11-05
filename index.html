@@ -2,168 +2,74 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0f172a"><meta name="app-version" content="3.2.0"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="app-version" content="4.0.0">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Автоклавы">
-  <meta name="description" content="Оперативное пособие и справочник оператора автоклавного отделения и котельной">
-  <title>Справочник оператора: Автоклавы и Котельная · v3.2.0</title>
+  <meta name="apple-mobile-web-app-title" content="Автоклавы и Котельная">
+  <title>Справочник: Автоклавное отделение и Котельная · v4.0.0</title>
   <link rel="manifest" href="./manifest.json">
-  <link rel="stylesheet" href="./styles.css">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230f172a'/><circle cx='50' cy='50' r='36' fill='none' stroke='%2338bdf8' stroke-width='8'/><path d='M50 24 L50 50 L68 62' stroke='%23f59e0b' stroke-width='8' stroke-linecap='round' fill='none'/></svg>">
+  <link rel="icon" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <div id="loadingScreen" class="loading-screen"><div class="loading-card"><div class="loading-logo">⚙</div><h2>Подготовка рабочего пособия</h2><p>Загружаем полный текст, изображения и быстрый поиск. Не закрывайте окно до завершения.</p><div class="loading-track"><div id="loadingProgress"></div></div><strong id="loadingPercent">0%</strong><span id="loadingStatus">Подготовка…</span></div></div>
-  <div class="app-layout">
-    <!-- Боковое меню (Слева на десктопе, выезжающее на мобильных) -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="brand" id="brandHomeBtn" title="Перейти на главную">
-          <div class="brand-icon">⚙️</div>
-          <div class="brand-text">
-            <span class="brand-title">АВТОКЛАВЫ</span>
-            <span class="brand-subtitle">И КОТЕЛЬНАЯ • ПОСОБИЕ</span>
-          </div>
-        </div>
-        <button class="icon-btn mobile-only" id="closeSidebarBtn" aria-label="Закрыть меню">✕</button>
-      </div>
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-card">
+      <svg class="loading-logo" viewBox="0 0 64 64" fill="none">
+        <circle cx="32" cy="32" r="24" stroke="url(#lg1)" stroke-width="5"/>
+        <path d="M32 14v18l13 9" stroke="#38bdf8" stroke-width="5" stroke-linecap="round"/>
+        <defs><linearGradient id="lg1" x1="8" y1="8" x2="56" y2="56"><stop stop-color="#38bdf8"/><stop offset="1" stop-color="#818cf8"/></linearGradient></defs>
+      </svg>
+      <h2>Подготовка справочника</h2>
+      <p id="loadingStatus">Загружаем текст, схемы и поиск…</p>
+      <div class="loading-track"><div id="loadingProgress" class="loading-bar"></div></div>
+      <div id="loadingPercent" class="loading-percent">0%</div>
+      <p class="loading-note">Не закрывайте окно до завершения</p>
+    </div>
+  </div>
 
-      <div class="sidebar-nav" id="sidebarNav">
-        <!-- Навигация генерируется автоматически из базы разделов -->
-      </div>
-
-      <div class="sidebar-footer">
-        <div class="offline-badge" id="offlineBadge">
-          <span class="status-dot online"></span>
-          <span id="networkStatusText">Оффлайн-база активна</span>
+  <div class="app">
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-head">
+        <div class="sidebar-logo">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="url(#sg1)" stroke-width="2"/><path d="M12 5v7l5 3.5" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/><defs><linearGradient id="sg1" x1="3" y1="3" x2="21" y2="21"><stop stop-color="#38bdf8"/><stop offset="1" stop-color="#818cf8"/></linearGradient></defs></svg>
         </div>
-        <div class="sidebar-version" id="sidebarVersion">Версия пособия: 3.2.0</div>
+        <div>
+          <div class="sidebar-title">Справочник оператора</div>
+          <div class="sidebar-sub">Автоклавы · Котельная</div>
+        </div>
+      </div>
+      <nav id="sidebarNav" class="sidebar-nav"></nav>
+      <div class="sidebar-foot">
+        <div class="net-dot"></div>
+        <span id="networkStatusText">Оффлайн-база</span>
+        <span id="sidebarVersion" class="sidebar-version">v4.0.0</span>
       </div>
     </aside>
 
-    <!-- Затемнение фона при открытии меню на мобильных -->
-    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
-
-    <!-- Основная область -->
-    <div class="main-container">
-      <!-- Верхняя панель с учетом iOS Dynamic Island -->
+    <main class="main">
       <header class="topbar">
-        <button class="icon-btn mobile-only" id="openSidebarBtn" aria-label="Открыть разделы">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
+        <button id="menuToggle" class="icon-btn" aria-label="Меню">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
-
-        <div class="search-wrapper" id="searchWrapper">
-          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input 
-            type="text" 
-            id="searchInput" 
-            class="search-input" 
-            placeholder="Поиск по пособию (СБУ, перепуск, ПЗК, 456, 1215)..." 
-            autocomplete="off"
-          >
-          <button class="search-clear-btn hidden" id="searchClearBtn" type="button" title="Очистить строку поиска" aria-label="Очистить">✕</button>
-          
-          <!-- Выпадающее окно результатов поиска с переходом к слову -->
-          <div class="search-dropdown hidden" id="searchDropdown">
-            <div class="search-dropdown-header">
-              <span id="searchCountText">Найдено совпадений: 0</span>
-              <button class="text-btn" id="closeSearchDropdownBtn" type="button">Закрыть</button>
-            </div>
-            <div class="search-results-list" id="searchResultsList"></div>
-          </div>
-        </div>
-
-        <div class="topbar-actions">
-          <button class="action-pill" id="normsModalBtn" type="button" title="Быстрая сводка рабочих параметров">
-            <span>📊</span>
-            <span class="desktop-only">Нормы и уставки</span>
-          </button>
-          <button class="action-pill home-pill" id="topHomeBtn" type="button" title="На главную панель">
-            <span>🏠</span>
-            <span class="desktop-only">Главная</span>
+        <div class="search">
+          <svg class="search-ic" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="searchInput" type="search" placeholder="Поиск: клапан, давление, SCADA, ПЗК…" autocomplete="off">
+          <button id="clearSearch" class="icon-btn search-clear" aria-label="Очистить" hidden>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
         </div>
       </header>
-
-      <!-- Панель управления подсветкой найденного слова в тексте -->
-      <div class="highlight-FloatingBar hidden" id="highlightBar">
-        <div class="highlight-info">
-          Слово: <strong id="highlightTermLabel"></strong> 
-          (<span id="highlightCurrentIdx">1</span> из <span id="highlightTotalCount">1</span>)
-        </div>
-        <div class="highlight-controls">
-          <button class="hl-btn" id="prevHighlightBtn" type="button" title="Предыдущее совпадение">▲</button>
-          <button class="hl-btn" id="nextHighlightBtn" type="button" title="Следующее совпадение">▼</button>
-          <button class="hl-btn hl-close" id="clearHighlightsBtn" type="button" title="Убрать подсветку">✕</button>
-        </div>
-      </div>
-
-      <!-- Контентная область -->
-      <main class="content-scroll" id="contentScroll">
-        <div class="content-inner" id="mainView">
-          <!-- Сюда рендерится Главная панель, Разделы или Справочник аварий -->
-        </div>
-      </main>
-    </div>
+      <div id="searchResults" class="search-results" hidden></div>
+      <div id="content" class="content"></div>
+    </main>
   </div>
-
-  <!-- Модальное окно: Сводная таблица критических параметров и паролей -->
-  <div class="modal-backdrop hidden" id="normsModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>📊 Ключевые параметры, давления и доступы</h3>
-        <button class="icon-btn" id="closeNormsModalBtn" type="button">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="norms-grid">
-          <div class="norm-box">
-            <h4>🔥 Автоклавное отделение</h4>
-            <ul>
-              <li><strong>Рабочее давление автоклава:</strong> 1,2 МПа (12 атм / 1215 кПа)</li>
-              <li><strong>Рабочая температура:</strong> 191 °C (макс. до 203 °C)</li>
-              <li><strong>Вместимость (АП 1,2-2×19):</strong> 16 вагонеток, объём 60 м³</li>
-              <li><strong>Разность температур (верх/низ):</strong> не более 10 °C</li>
-              <li><strong>Порог блокировки СБУ:</strong> 0,004 МПа</li>
-              <li><strong>Вакуумирование:</strong> до -0,05 МПа (~10 минут)</li>
-              <li><strong>Остывание для чистки:</strong> 100 °C (верх — открыть крышку), 80 °C (низ — вход для чистки)</li>
-              <li><strong>Пароль ст. оператора (Класс B, ручн.):</strong> <code>456</code></li>
-              <li><strong>Сброс аварии Segnetics:</strong> удерживать <code>STOP</code> 5 секунд</li>
-            </ul>
-          </div>
-          <div class="norm-box">
-            <h4>💧 Котельное оборудование</h4>
-            <ul>
-              <li><strong>Магистраль со скважины №2:</strong> ~9 бар (частота ЧП 30–50 Гц)</li>
-              <li><strong>Давление воды после редуктора ХВО:</strong> 6 бар (после фильтров ≥ 4 бар)</li>
-              <li><strong>Макс. перепад на фильтрах воды:</strong> не более 1,0 бар</li>
-              <li><strong>Деаэратор:</strong> уровень 79–81% (макс. 80%), t = 103–105 °C, P = 0,22–0,29 бар</li>
-              <li><strong>Реагенты 160 и 710:</strong> пропорция 1 : 9 (1 часть химии на 9 частей воды ХВО)</li>
-              <li><strong>Давление газа ГРУ:</strong> вход 6 бар → выход к котлам 0,3–0,6 бар (на малый котел ~2,5 кПа)</li>
-              <li><strong>Уровень воды в котле LOOS:</strong> авто 60% (уставка LM 55–60%, в стеклах 40–70%)</li>
-              <li><strong>Проводимость котловой воды (CM):</strong> 3200–4000 µS/cm</li>
-              <li><strong>Периодическая продувка шлама:</strong> раз в 1 час (TP = 1h) на 4–6 сек (TI)</li>
-              <li><strong>Контур отопления и ГВС:</strong> отопление 2–3 бар; ГВС 2–4 бар (прямая вода котла 1–2 бар)</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
+  <script src="./manual.js"></script>
   <script src="./loading.js"></script>
-  <script src="./data-autoclave.js"></script>
-  <script src="./data-boiler.js"></script>
-  <script src="./unified-manual.js"></script>
-  <script src="./data-enriched.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>
