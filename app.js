@@ -1,7 +1,7 @@
 /* Справочник оператора v4.0.0 — единое приложение из двух инструкций */
 (() => {
   "use strict";
-  const VERSION = "4.2.0";
+  const VERSION = "4.3.0";
   const M = window.MANUAL;
   M.books.forEach((b, i) => { b.short = i === 0 ? "Котельное оборудование" : "Автоклавное отделение"; });
   const $ = (s) => document.querySelector(s);
@@ -144,7 +144,7 @@
     if (!hlMarks.length) return;
     hlIndex = (i + hlMarks.length) % hlMarks.length;
     hlUpdate();
-    hlMarks[hlIndex].scrollIntoView({ behavior: "smooth", block: "center" });
+    const box = $("#content"); const el = hlMarks[hlIndex]; const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 110; box.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
   }
   function hlHide() { hlbar.hidden = true; hlMarks = []; hlIndex = -1; }
   function hlShow(q) {
@@ -178,8 +178,10 @@
         return `<div class="art-li" id="${id}"><span class="li-dot"></span><span>${mark(it.t, q)}</span></div>`;
       if (it.k === "warn")
         return `<div class="art-warn" id="${id}">${ICONS.alert}<div>${mark(it.t, q)}</div></div>`;
-      if (it.k === "toc")
-        return `<button class="art-toc ${it.to ? "" : "no-link"}" id="${id}" ${it.to ? `data-toc-book="${bi}" data-toc-to="${it.to}" ${it.blk != null ? `data-toc-blk="${it.blk}"` : ""}` : "disabled"}>${ICONS.doc}<span>${mark(it.t, q)}</span>${it.to ? ICONS.right : ""}</button>`;
+      if (it.k === "toc") {
+        const target = it.to || ch.id;
+        return `<button class="art-toc" id="${id}" data-toc-book="${bi}" data-toc-to="${target}" ${it.blk != null ? `data-toc-blk="${it.blk}"` : ""}>${ICONS.doc}<span>${mark(it.t, q)}</span>${ICONS.right}</button>`;
+      }
       return `<div class="art-block" id="${id}">${mark(it.t, q)}</div>`;
     }).join("");
     $("#content").innerHTML = `
@@ -201,7 +203,7 @@
     if (focus != null) {
       setTimeout(() => {
         const el = document.getElementById("blk-" + focus);
-        if (el) { el.classList.add("hl-jump"); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+        if (el) { el.classList.add("hl-jump"); const box = $("#content"); const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 100; box.scrollTo({ top: Math.max(0, top), behavior: "smooth" }); }
       }, 120);
     } else {
       $("#content").scrollTop = 0;
@@ -305,6 +307,9 @@
       const ci = M.books[bi].chapters.findIndex((ch) => ch.id === to);
       if (ci >= 0) {
         navigate({ type: "chapter", book: bi, ch: ci, focus: t.dataset.tocBlk != null ? Number(t.dataset.tocBlk) : null });
+      } else {
+        const fallback = M.books[bi].chapters.findIndex((ch) => ch.id === t.dataset.tocTo.split('-')[0]);
+        if (fallback >= 0) navigate({ type: "chapter", book: bi, ch: fallback });
       }
     }
   });
