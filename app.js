@@ -1,7 +1,7 @@
 /* Справочник оператора v4.0.0 — единое приложение из двух инструкций */
 (() => {
   "use strict";
-  const VERSION = "4.4.0";
+  const VERSION = "4.4.1";
   const M = window.MANUAL;
   M.books.forEach((b, i) => { b.short = i === 0 ? "Котельное оборудование" : "Автоклавное отделение"; });
   const $ = (s) => document.querySelector(s);
