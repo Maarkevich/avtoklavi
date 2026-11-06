@@ -113,7 +113,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 #searchInput::placeholder { color: #6d7f99; }
 .search-clear { position: absolute; right: 5px; width: 34px; height: 34px; }
 
-.content { flex: 1; overflow-y: auto; padding: calc(86px + var(--safe-top)) 20px calc(30px + var(--safe-bottom)); scroll-behavior: smooth; }
+.content { flex: 1; overflow-y: auto; padding: calc(86px + var(--safe-top)) 20px calc(90px + var(--safe-bottom)); scroll-behavior: smooth; }
 
 /* ===== Боковая навигация ===== */
 .nav-btn {

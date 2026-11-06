@@ -1,7 +1,7 @@
 /* Справочник оператора v4.0.0 — единое приложение из двух инструкций */
 (() => {
   "use strict";
-  const VERSION = "4.3.0";
+  const VERSION = "4.4.0";
   const M = window.MANUAL;
   M.books.forEach((b, i) => { b.short = i === 0 ? "Котельное оборудование" : "Автоклавное отделение"; });
   const $ = (s) => document.querySelector(s);
@@ -304,12 +304,15 @@
     if (t) {
       const bi = Number(t.dataset.tocBook);
       const to = t.dataset.tocTo;
+      const blk = t.dataset.tocBlk != null ? Number(t.dataset.tocBlk) : null;
       const ci = M.books[bi].chapters.findIndex((ch) => ch.id === to);
       if (ci >= 0) {
-        navigate({ type: "chapter", book: bi, ch: ci, focus: t.dataset.tocBlk != null ? Number(t.dataset.tocBlk) : null });
+        navigate({ type: "chapter", book: bi, ch: ci, focus: blk });
       } else {
-        const fallback = M.books[bi].chapters.findIndex((ch) => ch.id === t.dataset.tocTo.split('-')[0]);
-        if (fallback >= 0) navigate({ type: "chapter", book: bi, ch: fallback });
+        // Fallback: найти главу по префиксу или первую главу книги
+        const fallback = M.books[bi].chapters.findIndex((ch) => ch.id === to.split('-')[0]);
+        if (fallback >= 0) navigate({ type: "chapter", book: bi, ch: fallback, focus: blk });
+        else navigate({ type: "chapter", book: bi, ch: 0, focus: blk });
       }
     }
   });
